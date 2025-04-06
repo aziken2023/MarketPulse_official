@@ -1,335 +1,231 @@
-/* Basic styling */
+/* Global Styles */
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f9;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    text-align: center;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f4f6f8;
+  color: #2c3e50;
 }
 
-/* Header Styling */
-.header {
-    background-color: #4CAF50;
-    color: white;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-left: 260px;
-    font-size: 1.2em;
-    font-weight: bold;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+a {
+  color: #3498db;
+  text-decoration: none;
+  transition: color 0.3s;
 }
 
-/* User Info Styling */
-.user-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
+a:hover {
+  color: #2980b9;
+  text-decoration: underline;
 }
 
-.user-name {
-    font-size: 1.4em;
-    margin: 0;
-    font-weight: bold;
+h1, h2, p {
+  margin: 0 0 16px;
 }
 
-.company-name {
-    font-size: 1.2em;
-    color: #ccc;
+/* Layout */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-/* Sidebar and Main Content Layout */
-.dashboard-container {
-    display: flex;
-    width: 100%;
+.top-nav {
+  width: 100%;
+  background-color: #2c3e50;
+  color: white;
+  padding: 10px 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
 }
 
-.sidebar {
-    width: 250px;
-    height: 100vh;
-    background-color: #333;
-    color: white;
-    padding-top: 20px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    display: flex;
-    flex-direction: column;
-    padding-left: 20px;
+.top-nav .logo {
+  font-size: 24px;
+  font-weight: bold;
 }
 
-.main-content {
-    margin-left: 260px;
-    padding: 20px;
-    width: 100%;
-    background-color: #f4f4f9;
+.top-nav .nav-links ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-/* Section Styling */
-section {
-    margin-top: 20px;
-    padding: 20px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+.top-nav .nav-links li {
+  margin-right: 20px;
 }
 
-/* Button Styling */
-button {
-    width: 100%;
-    padding: 12px;
-    background-color: #4CAF50;
-    border: none;
-    color: white;
-    font-size: 1.2em;
-    cursor: pointer;
-    border-radius: 4px;
+.top-nav .nav-links button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
 }
 
-button:hover {
-    background-color: #45a049;
+.top-nav .nav-links button:hover {
+  color: #2980b9;
 }
 
-/* Graph Styling */
-.plotly-graph-div {
-    margin-top: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+/* Content below the top nav */
+.dashboard {
+  margin-top: 60px;
+  padding: 20px;
 }
 
-  
-  /* Form container and grid setup */
-  .form-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Create two equal-width columns */
-    gap: 20px; /* Space between columns */
-    max-width: 100%;
-    margin-top: 20px;
-  }
-  
-  .form-column {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  label {
-    display: block;
-    margin-bottom: 6px;
-    text-align: left;
-    font-weight: bold;
-  }
-  
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="tel"] {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    font-size: 1em;
-  }
-  
-  button {
-    width: 100%;
-    padding: 12px;
-    background-color: #4CAF50;
-    border: none;
-    color: white;
-    font-size: 1.2em;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  
-  button:hover {
-    background-color: #45a049;
-  }
-  
-  .error {
-    color: red;
-    font-size: 1em;
-  }
-  
-
-/* Headings */
-h1 {
-    font-size: 2em;
-    color: #4CAF50;
-    margin-bottom: 20px;
+.container {
+  margin-top: 100px;
 }
 
-p {
-    font-size: 1.1em;
-    margin-bottom: 20px;
+/* Big Title Section */
+.container h1 {
+  font-size: 60px;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20%;
 }
 
-/* Form inputs */
-label {
-    display: block;
-    margin-bottom: 6px;
-    text-align: left;
-    font-weight: bold;
+.container p {
+  font-size: 18px;
+  text-align: center;
 }
 
-input[type="text"], 
-input[type="email"], 
-input[type="password"], 
-input[type="tel"] {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    font-size: 1em;
+/* Feature Cards */
+.card {
+  background: white;
+  padding: 24px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  margin: 16px;
+  width: 300px;
+  text-align: center;
+  transition: transform 0.3s ease;
 }
 
-/* Adjusted grid layout for 5 items on the left, 4 on the right */
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Two equal-width columns */
-    gap: 20px;
+.card:hover {
+  transform: translateY(-5px);
 }
 
-.left-column {
-    grid-column: span 1; /* Ensure 5 forms take the left column */
+/* Forms Styles for Login and Register */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 400px;
+  margin: 0 auto;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.right-column {
-    grid-column: span 1; /* Ensure 4 forms take the right column */
+form input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  width: 100%;
 }
 
-/* Make sure the country dropdown input fits well */
-.PhoneInputInput {
-    width: 100%;
+form button {
+  padding: 12px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
 }
 
-/* Button styling */
-button {
-    width: 100%;
-    padding: 12px;
-    background-color: #4CAF50;
-    border: none;
-    color: white;
-    font-size: 1.2em;
-    cursor: pointer;
-    border-radius: 4px;
+form button:hover {
+  background-color: #2980b9;
 }
 
-button:hover {
-    background-color: #45a049;
+form .error {
+  color: red;
+  font-size: 14px;
 }
 
-/* Footer links */
-footer {
-    margin-top: 15px;
-    font-size: 0.9em;
-    color: #888;
+form p {
+  text-align: center;
 }
 
-footer a {
-    color: #4CAF50;
-    text-decoration: none;
+form p button {
+  background: none;
+  color: #3498db;
+  border: none;
+  cursor: pointer;
 }
 
-/* -------------------------------------------------- */
-
-/* Sidebar styling for Dashboard */
-.sidebar {
-    width: 250px;
-    height: 100vh;
-    background-color: #333;
-    color: white;
-    padding-top: 20px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding-left: 20px;
-    transition: width 0.3s;
+form p button:hover {
+  text-decoration: underline;
 }
 
-.sidebar a {
-    color: white;
-    text-decoration: none;
-    font-size: 1.2em;
-    padding: 12px 20px;
-    width: 100%;
-    display: block;
-    margin-bottom: 10px;
-}
-
-.sidebar a:hover {
-    background-color: #4CAF50;
-    border-radius: 4px;
-}
-
-/* Main content area */
-.main-content {
-    margin-left: 260px;
-    padding: 20px;
-    width: 100%;
-    height: 100vh;
-    background-color: #f4f4f9;
-    overflow-y: auto;
-    transition: margin-left 0.3s;
-}
-
-/* Header for the dashboard */
-.header {
-    background-color: #4CAF50;
-    padding: 15px;
-    color: white;
-    text-align: left;
-    font-size: 1.5em;
-    font-weight: bold;
-    margin-left: 260px;
-    border-radius: 8px 8px 0 0;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Main content section */
-.dashboard-section {
-    margin-top: 20px;
-}
-
-/* Ensure all sections are spaced properly */
-section {
-    padding: 20px;
-    background-color: white;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-section h2 {
-    font-size: 1.8em;
-    margin-bottom: 10px;
-}
-
-section p {
-    font-size: 1.2em;
-    color: #333;
-}
-
-/* Make sure everything is responsive */
+/* Responsive Layout Adjustments */
 @media (max-width: 768px) {
-    .sidebar {
-        width: 200px;
-    }
-    .main-content {
-        margin-left: 200px;
-    }
-    .form-grid {
-        grid-template-columns: 1fr; /* Single column on small screens */
-    }
+  .container {
+    margin-top: 80px;
+    padding: 10px;
+  }
+
+  .card {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .top-nav .logo {
+    font-size: 20px;
+  }
+
+  .top-nav .nav-links li {
+    margin-right: 10px;
+  }
+
+  .container h1 {
+    font-size: 50px;
+  }
 }
+
+.register-form {
+  display: flex;
+  flex-wrap: wrap; /* Allows wrapping of form fields */
+  gap: 20px; /* Space between columns */
+  justify-content: space-between;
+}
+
+.form-group {
+  display: flex;
+  flex: 1; /* This ensures fields within each group are flexible */
+  gap: 10px; /* Space between fields within the same group */
+}
+
+input {
+  flex: 1;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+button {
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  width: 100%;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.error {
+  color: red;
+  margin-bottom: 20px;
+}
+
 

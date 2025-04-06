@@ -1,102 +1,145 @@
 from fastapi import FastAPI, File, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
-from io import StringIO
+import io
+import joblib
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+import xgboost as xgb
+import plotly.express as px
+import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# CORS settings
+# Load the model
+model_path = "moneypulse_model.pkl"
+model = joblib.load(model_path)
+
+# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Allow frontend to connect
+    allow_origins=["*"],  # Allow any origin or specify your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Global variable to store the uploaded dataset
-uploaded_df = None
+# Function to identify numerical and categorical columns dynamically
+def identify_features(uploaded_df):
+    numerical_cols = []
+    categorical_cols = []
+    
+    for col in uploaded_df.columns:
+        if uploaded_df[col].dtype in [np.int64, np.float64]:
+            numerical_cols.append(col)
+        else:
+            categorical_cols.append(col)
+    
+    return numerical_cols, categorical_cols
 
-# Root endpoint
-@app.get("/")
-def root():
-    return {"message": "MarketPulse API is running"}
+# Function for preprocessing the dataset
+def preprocess_columns(uploaded_df):
+    numerical_cols, categorical_cols = identify_features(uploaded_df)
+    
+    # Impute missing numerical data with the median
+    for col in numerical_cols:
+        uploaded_df[col] = uploaded_df[col].fillna(uploaded_df[col].median())
+    
+    # Encode categorical variables
+    label_encoders = {}
+    for col in categorical_cols:
+        le = LabelEncoder()
+        uploaded_df[col] = le.fit_transform(uploaded_df[col].fillna('Unknown'))  # Handle missing categorical data
+        label_encoders[col] = le
+    
+    # Normalize numerical features
+    scaler = StandardScaler()
+    uploaded_df[numerical_cols] = scaler.fit_transform(uploaded_df[numerical_cols])
 
-# Upload dataset endpoint
-@app.post("/upload-dataset")
-async def upload_dataset(file: UploadFile = File(...)):
-    global uploaded_df
-    contents = await file.read()
-    uploaded_df = pd.read_csv(StringIO(contents.decode("utf-8")))
-    return {"message": "Dataset uploaded successfully!"}
+    return uploaded_df, label_encoders, scaler
 
-# Consumer Insight Endpoints
-@app.post("/upload-consumer-data")
-async def upload_consumer_data(file: UploadFile = File(...)):
-    global uploaded_df
-    contents = await file.read()
-    uploaded_df = pd.read_csv(StringIO(contents.decode("utf-8")))
-    return {"message": "Consumer data uploaded successfully!"}
+# Function for generating predictions
+def get_model_prediction(df, model):
+    dmatrix = xgb.DMatrix(df)
+    prediction = model.predict(dmatrix)
+    return prediction
 
-@app.post("/cluster-users")
-async def cluster_users():
-    if uploaded_df is None:
-        return {"error": "No dataset uploaded"}
-    # Example clustering logic
-    clusters = {"clusters": [1, 2, 3]}  # Replace with actual clustering logic
-    return clusters
+# Function to generate insights
+def generate_insights(df):
+    insights = {
+        "total_entries": len(df),
+        "missing_values": df.isnull().sum().to_dict(),
+        "average_purchase_amount": df['Purchase_Amount'].mean(),
+        "average_purchase_frequency": df['Frequency_of_Purchase'].mean(),
+    }
+    return insights
 
-@app.post("/predict-conversion")
-async def predict_conversion():
-    if uploaded_df is None:
-        return {"error": "No dataset uploaded"}
-    # Example prediction logic
-    predictions = {"predictions": [0, 1, 0]}  # Replace with actual prediction logic
-    return predictions
+# Function to generate visualizations
+def generate_visualization(predictions):
+    fig = px.bar(x=np.arange(len(predictions)), y=predictions)
+    return fig
 
-@app.post("/recommend-products")
-async def recommend_products():
-    if uploaded_df is None:
-        return {"error": "No dataset uploaded"}
-    # Example recommendation logic
-    recommendations = {"recommendations": ["Product A", "Product B"]}  # Replace with actual logic
+# Function to generate business recommendations based on data
+def generate_business_recommendations(df, predictions):
+    recommendations = []
+
+    # Example recommendation based on purchase behavior
+    if df['Purchase_Amount'].mean() > 100:
+        recommendations.append("Consider offering higher-value product bundles to increase purchase amounts.")
+    
+    if df['Frequency_of_Purchase'].mean() < 2:
+        recommendations.append("Encourage more frequent purchases through loyalty programs or discounts.")
+    
+    if df['Brand_Loyalty'].mean() < 0.5:
+        recommendations.append("Focus on improving brand loyalty programs or offering incentives for repeat customers.")
+
+    # Example recommendations based on predictions
+    high_purchase_customers = df[predictions > 0.5]  # assuming >0.5 indicates high intent to purchase
+    if len(high_purchase_customers) > 0:
+        recommendations.append(f"Target marketing campaigns at the top {len(high_purchase_customers)} high-purchase customers.")
+    
+    # Return a set of actionable recommendations
     return recommendations
 
-# Product Review Endpoints
-@app.post("/analyze-sentiment")
-async def analyze_sentiment():
-    if uploaded_df is None:
-        return {"error": "No dataset uploaded"}
-    # Example sentiment analysis logic
-    sentiments = {"sentiments": ["positive", "negative", "neutral"]}  # Replace with actual logic
-    return sentiments
+# Endpoint to upload dataset
+@app.post("/upload-dataset")
+async def upload_dataset(file: UploadFile = File(...)):
+    contents = await file.read()
+    df = pd.read_csv(io.BytesIO(contents)) if file.filename.endswith('.csv') else pd.read_excel(io.BytesIO(contents))
+    
+    # Preprocess and generate insights
+    processed_data, label_encoders, scaler = preprocess_columns(df)
+    insights = generate_insights(df)
+    
+    # Generate business recommendations based on the insights and predictions
+    predictions = get_model_prediction(processed_data, model)
+    business_recommendations = generate_business_recommendations(df, predictions)
+    
+    return {
+        "message": "File uploaded successfully", 
+        "insights": insights, 
+        "business_recommendations": business_recommendations
+    }
 
-@app.post("/predict-rating")
-async def predict_rating():
-    if uploaded_df is None:
-        return {"error": "No dataset uploaded"}
-    # Example rating prediction logic
-    ratings = {"ratings": [4.5, 3.2, 5.0]}  # Replace with actual logic
-    return ratings
+# Endpoint to recommend business actions based on predictions
+@app.post("/recommend-business")
+async def recommend_business(file: UploadFile = File(...)):
+    contents = await file.read()
+    df = pd.read_csv(io.BytesIO(contents)) if file.filename.endswith('.csv') else pd.read_excel(io.BytesIO(contents))
 
-# Reports & Recommendations Endpoints
-@app.post("/forecast-sales")
-async def forecast_sales():
-    if uploaded_df is None:
-        return {"error": "No dataset uploaded"}
-    # Example sales forecasting logic
-    forecast = {"forecast": [100, 200, 300]}  # Replace with actual logic
-    return forecast
-
-@app.post("/detect-anomalies")
-async def detect_anomalies():
-    if uploaded_df is None:
-        return {"error": "No dataset uploaded"}
-    # Example anomaly detection logic
-    anomalies = {"anomalies": [5, 10, 15]}  # Replace with actual logic
-    return anomalies
-
-# Run the backend server
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # Preprocess data
+    processed_data, label_encoders, scaler = preprocess_columns(df)
+    
+    # Get predictions
+    predictions = get_model_prediction(processed_data, model)
+    
+    # Generate visualization
+    fig = generate_visualization(predictions)
+    
+    # Generate business recommendations based on predictions
+    business_recommendations = generate_business_recommendations(df, predictions)
+    
+    return {
+        "recommendations": predictions.tolist(),
+        "business_recommendations": business_recommendations,
+        "visualization": fig.to_json()
+    }
