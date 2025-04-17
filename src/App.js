@@ -1,3 +1,4 @@
+// App.js
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -21,8 +22,53 @@ import { auth, db } from "./firebaseconfig";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import Plot from "react-plotly.js";
 import axios from "axios";
-import Papa from "papaparse"; // Ensure Papa Parse is installed
+import Papa from "papaparse";
 import "./index.css";
+
+// ------------------ PredictionChart Component ------------------
+function PredictionChart({ predictions }) {
+  if (
+    !predictions ||
+    (Array.isArray(predictions) && predictions.length === 0) ||
+    typeof predictions === "string"
+  ) {
+    return <p>No predictions available.</p>;
+  }
+  const data = [
+    {
+      x: predictions.map((_, i) => i + 1),
+      y: predictions,
+      type: "scatter",
+      mode: "lines+markers",
+      marker: { color: "#2980b9" },
+      hovertemplate: 'Index: %{x}<br>Prediction: %{y:.2f}<extra></extra>',
+    },
+  ];
+  const layout = {
+    title: "Prediction Trend",
+    xaxis: { title: "Index" },
+    yaxis: { title: "Prediction Value", hoverformat: ".2f" },
+    margin: { t: 40, r: 20, b: 50, l: 50 },
+  };
+  return (
+    <div className="chart-box">
+      <Plot
+        data={data}
+        layout={layout}
+        config={{
+          displayModeBar: true,
+          toImageButtonOptions: {
+            format: "png",
+            filename: "prediction-chart",
+            height: 600,
+            width: 800,
+            scale: 1,
+          },
+        }}
+      />
+    </div>
+  );
+}
 
 // ------------------ ProtectedRoute Component ------------------
 function ProtectedRoute({ children }) {
@@ -33,16 +79,25 @@ function ProtectedRoute({ children }) {
     });
     return () => unsubscribe();
   }, []);
-  if (user === null) return null; // Optionally display a loader here
+  if (user === null) return null;
   return user ? children : <Navigate to="/login" />;
 }
 
 // ------------------ Report Component ------------------
-function ConsumerShoppingBehaviourReport({ consumerReport }) {
+function ConsumerShoppingBehaviourReport({ consumerReport, insights }) {
   if (!consumerReport) return null;
   return (
     <div className="report-box">
       <h3 className="report-title">Consumer Shopping Behaviour Report</h3>
+      {/* Clear Key Performance Indicators */}
+      <div className="kpi-section">
+        <p>
+          <strong>Total Entries:</strong> {insights.total_entries}
+        </p>
+        <p>
+          <strong>Total Columns:</strong> {insights.total_columns}
+        </p>
+      </div>
       <p>{consumerReport.general_summary}</p>
       <h4>Business Recommendations</h4>
       <ul>
@@ -53,6 +108,89 @@ function ConsumerShoppingBehaviourReport({ consumerReport }) {
       </ul>
       <h4>Prediction</h4>
       <p>{consumerReport.prediction}</p>
+    </div>
+  );
+}
+
+// ------------------ GeminiChatbot Component ------------------
+function GeminiChatbot({ datasetContext, customerSegments }) {
+  const [conversation, setConversation] = useState([]);
+  const [userInput, setUserInput] = useState("");
+
+  const handleSend = async () => {
+    if (!userInput.trim()) return;
+    setConversation((prev) => [...prev, { sender: "user", text: userInput }]);
+    try {
+      const response = await axios.post("http://localhost:8000/gemini-chatbot", {
+        query: userInput,
+        datasetContext,
+        customerSegments,
+      });
+      const botReply = response.data.response;
+      setConversation((prev) => [...prev, { sender: "bot", text: botReply }]);
+    } catch (error) {
+      console.error("Chatbot error:", error);
+      setConversation((prev) => [
+        ...prev,
+        { sender: "bot", text: "Sorry, something went wrong." },
+      ]);
+    }
+    setUserInput("");
+  };
+
+  return (
+    <div
+      className="gemini-chatbot"
+      style={{
+        marginTop: "20px",
+        padding: "20px",
+        background: "rgba(255,255,255,0.95)",
+        borderRadius: "8px",
+        boxShadow: "0 6px 14px rgba(0, 0, 0, 0.05)",
+      }}
+    >
+      <h3>Business Recommendations Chatbot</h3>
+      <div
+        className="chat-window"
+        style={{
+          border: "1px solid #ccc",
+          padding: "10px",
+          maxHeight: "300px",
+          overflowY: "scroll",
+          background: "#fff",
+          borderRadius: "5px",
+        }}
+      >
+        {conversation.map((msg, idx) => (
+          <div
+            key={idx}
+            style={{
+              margin: "10px 0",
+              textAlign: msg.sender === "bot" ? "left" : "right",
+            }}
+          >
+            <strong>{msg.sender === "bot" ? "Bot:" : "You:"}</strong>{" "}
+            {msg.text}
+          </div>
+        ))}
+      </div>
+      <div className="chat-input" style={{ marginTop: "10px", display: "flex" }}>
+        <input
+          type="text"
+          value={userInput}
+          onChange={(e) => setUserInput(e.target.value)}
+          placeholder="Ask business improvement questions..."
+          style={{
+            flex: 1,
+            padding: "8px",
+            borderRadius: "5px",
+            border: "1px solid #ddd",
+          }}
+        />
+        <button onClick={handleSend} style={{ padding: "8px 12px", marginLeft: "10px" }}>
+          Send
+        </button>
+      </div>
     </div>
   );
 }
@@ -72,7 +210,7 @@ function TopNav() {
   };
   return (
     <div className="top-nav">
-      <div className="logo">MarketPulse</div>
+      <div className="logo">MarketPro</div>
       <div className="nav-links">
         <ul>
           <li>
@@ -96,14 +234,12 @@ function TopNav() {
 function Home() {
   return (
     <div className="container home-container">
-      <h1>Welcome to MarketPulse!</h1>
+      <h1>Welcome to MarketPro!</h1>
       <p>
-        Get the latest insights on consumer behaviour and make data-driven
-        decisions to grow your business.
+        Get the latest insights on consumer behaviour and make data-driven decisions to grow your business.
       </p>
       <p>
-        Please <Link to="/login">Log in</Link> or{" "}
-        <Link to="/register">Register</Link> to access full features.
+        Please <Link to="/login">Log in</Link> or <Link to="/register">Register</Link> to access full features.
       </p>
     </div>
   );
@@ -117,7 +253,6 @@ function Auth() {
   useEffect(() => {
     setIsLogin(location.pathname === "/login");
   }, [location.pathname]);
-
   return (
     <div className="container">
       <div className="form-container">
@@ -186,9 +321,7 @@ function RegisterForm({ switchForm }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const isPasswordValid = (password) =>
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/.test(
-      password
-    );
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/.test(password);
   const handleRegister = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword)
@@ -289,7 +422,6 @@ function RegisterForm({ switchForm }) {
   );
 }
 
-// ------------------ Account ------------------
 function Account() {
   const [userInfo, setUserInfo] = useState({});
   useEffect(() => {
@@ -302,6 +434,7 @@ function Account() {
     };
     fetchUserInfo();
   }, []);
+
   const handlePasswordReset = () => {
     const user = auth.currentUser;
     if (user) {
@@ -310,6 +443,7 @@ function Account() {
         .catch(console.error);
     }
   };
+
   const handleEmailChange = (newEmail) => {
     const user = auth.currentUser;
     if (user) {
@@ -318,8 +452,9 @@ function Account() {
         .catch(console.error);
     }
   };
+
   return (
-    <div className="account-page" style={{ textAlign: "center" }}>
+    <div className="account-page">
       <h2>User Account Information</h2>
       <div className="account-card">
         <p>
@@ -351,7 +486,6 @@ function Account() {
   );
 }
 
-// ------------------ FilteredChart Component ------------------
 function FilteredChart({ col, originalData }) {
   const sampleValue = originalData.find(
     (row) => row[col] !== undefined && row[col] !== null
@@ -422,12 +556,21 @@ function FilteredChart({ col, originalData }) {
       <Plot
         data={chartData}
         layout={{ title: `Filtered Distribution of ${col}` }}
+        config={{
+          displayModeBar: true,
+          toImageButtonOptions: {
+            format: "png",
+            filename: `chart-${col}`,
+            height: 600,
+            width: 800,
+            scale: 1,
+          },
+        }}
       />
     </div>
   );
 }
 
-// ------------------ Dashboard ------------------
 function Dashboard() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState(null);
@@ -465,7 +608,6 @@ function Dashboard() {
     formData.append("file", file);
     setLoading(true);
     try {
-      // Save raw file data for in-chart filtering using Papa Parse
       const fileReader = new FileReader();
       fileReader.onload = () => {
         const content = fileReader.result;
@@ -479,11 +621,9 @@ function Dashboard() {
       };
       fileReader.readAsText(file);
 
-      const response = await axios.post(
-        "http://localhost:8000/recommend-business",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      const response = await axios.post("http://localhost:8000/recommend-business", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       setMessage("Analysis completed.");
       setInsights(response.data.insights || {});
       setConsumerReport(response.data.consumer_report || {});
@@ -506,62 +646,105 @@ function Dashboard() {
     return keys;
   };
 
-  const handleDownloadReport = () => {
-    if (!consumerReport) return;
-    const reportText = `
-===== Consumer Shopping Behaviour Report =====
-
-General Summary:
-${consumerReport.general_summary}
-
-Business Recommendations:
-${consumerReport.business_recommendations
-  .map((rec, idx) => `${idx + 1}. ${rec}`)
-  .join("\n")}
-
-Prediction:
-${consumerReport.prediction}
-`;
-    const fileName = `${
-      userInfo.companyName
-        ? userInfo.companyName.replace(/\s+/g, "_")
-        : "Report"
-    }_Report.txt`;
-    const blob = new Blob([reportText], { type: "text/plain" });
-    const link = document.createElement("a");
-    link.download = fileName;
-    link.href = URL.createObjectURL(blob);
-    link.click();
+  const handleDownloadReport = async () => {
+    if (!file) {
+      alert("Please upload a file first to generate the report.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const response = await axios.post("http://localhost:8000/download-report-pdf", formData, {
+        responseType: "blob",
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const fileName = `${
+        userInfo.companyName ? userInfo.companyName.replace(/\s+/g, "_") : "Report"
+      }_Report.pdf`;
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+    }
   };
+
+  // Use the extended_context if available, otherwise fall back to the general summary.
+  const datasetContext = consumerReport
+    ? consumerReport.extended_context || consumerReport.general_summary
+    : "Dataset context not available";
+
+  // Extract customer segments based on column names (adjust this logic as needed)
+  const customerSegments =
+    consumerReport && consumerReport.column_specific_recommendations
+      ? Object.keys(consumerReport.column_specific_recommendations).filter((col) =>
+          col.toLowerCase().includes("segment")
+        )
+      : [];
 
   return (
     <div className="dashboard">
       <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-        Welcome, {userInfo.firstName} {userInfo.lastName} from{" "}
-        {userInfo.companyName}
+        Welcome, {userInfo.firstName} {userInfo.lastName} from {userInfo.companyName}
       </h2>
 
       <div className="upload-section">
         <h3>Upload Dataset</h3>
-        <input type="file" accept=".csv, .xlsx" onChange={handleFileChange} />
+        {/* Custom-styled file upload input */}
+        <label
+          htmlFor="file-upload"
+          className="custom-file-upload"
+          style={{
+            padding: "12px 20px",
+            background: "linear-gradient(45deg, #2980b9, #1abc9c)",
+            color: "#fff",
+            borderRadius: "8px",
+            cursor: "pointer",
+            display: "inline-block",
+          }}
+        >
+          Choose File
+        </label>
+        <input
+          id="file-upload"
+          type="file"
+          accept=".csv, .xlsx"
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+        />
+        {/* File Preview */}
+        {file && (
+          <div className="file-preview">
+            Selected File: {file.name}
+          </div>
+        )}
+        {/* Data Preview Section */}
+        {uploadedData.length > 0 && (
+          <div className="data-preview">
+            <h4>Data Preview</h4>
+            <pre>{JSON.stringify(uploadedData.slice(0, 5), null, 2)}</pre>
+          </div>
+        )}
         <button onClick={handleFileUpload}>Upload</button>
       </div>
 
-      {loading && (
-        <p className="loading">⏳ Processing data, please wait...</p>
-      )}
+      {loading && <p className="loading">⏳ Processing data, please wait...</p>}
       {message && <p className="message">{message}</p>}
 
       {insights && (
         <div className="insights-box">
           <h3>Overall Insights</h3>
-          <p>Total Entries: {insights.total_entries}</p>
-          <p>Total Columns: {insights.total_columns}</p>
+          <p><strong>Total Entries:</strong> {insights.total_entries}</p>
+          <p><strong>Total Columns:</strong> {insights.total_columns}</p>
         </div>
       )}
 
       {consumerReport && (
-        <ConsumerShoppingBehaviourReport consumerReport={consumerReport} />
+        <ConsumerShoppingBehaviourReport consumerReport={consumerReport} insights={insights} />
       )}
 
       <div className="chart-section">
@@ -569,40 +752,77 @@ ${consumerReport.prediction}
         <div className="chart-controls">
           <input
             type="text"
-            placeholder="Filter charts by column name..."
+            placeholder="Type to filter charts (e.g., 'amount', 'frequency')..."
             value={graphFilter}
             onChange={(e) => setGraphFilter(e.target.value)}
+            style={{
+              padding: "8px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+              marginRight: "10px"
+            }}
           />
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
+            style={{
+              padding: "8px",
+              borderRadius: "5px",
+              border: "1px solid #ccc"
+            }}
           >
             <option value="asc">Sort Ascending</option>
             <option value="desc">Sort Descending</option>
           </select>
         </div>
-        {getFilteredSortedKeys().map((col, index) => (
-          <div key={index} className="chart-box">
-            {uploadedData.length > 0 ? (
-              <FilteredChart col={col} originalData={uploadedData} />
-            ) : (
-              <Plot
-                data={JSON.parse(chartsByColumn[col]).data}
-                layout={JSON.parse(chartsByColumn[col]).layout}
-              />
-            )}
-          </div>
-        ))}
+        <div className="chart-container">
+          {getFilteredSortedKeys().map((col, index) => (
+            <div key={index} className="chart-box">
+              {uploadedData.length > 0 ? (
+                <FilteredChart col={col} originalData={uploadedData} />
+              ) : (
+                <Plot
+                  data={JSON.parse(chartsByColumn[col]).data}
+                  layout={JSON.parse(chartsByColumn[col]).layout}
+                  config={{
+                    displayModeBar: true,
+                    toImageButtonOptions: {
+                      format: "png",
+                      filename: `chart-${col}`,
+                      height: 600,
+                      width: 800,
+                      scale: 1,
+                    },
+                  }}
+                />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
+      {consumerReport && (
+        <div className="prediction-chart-section">
+          <h3>Model Predictions</h3>
+          <PredictionChart predictions={consumerReport.prediction} />
+        </div>
+      )}
+
+      {/* Gemini AI Chatbot Section */}
+      <GeminiChatbot
+        datasetContext={datasetContext}
+        customerSegments={customerSegments}
+      />
+
       <div className="download-section">
-        <button onClick={handleDownloadReport}>⬇️ Download Report</button>
+        <button onClick={handleDownloadReport}>
+          ⬇️ Download Report (PDF)
+        </button>
       </div>
     </div>
   );
 }
 
-// ------------------ Main App ------------------
 function App() {
   const [user, setUser] = useState(null);
   useEffect(() => {
@@ -611,7 +831,6 @@ function App() {
     });
     return () => unsubscribe();
   }, []);
-
   return (
     <Router>
       {user && <TopNav />}
