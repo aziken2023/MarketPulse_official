@@ -25,10 +25,13 @@ except Exception as e:
     model = None
     print("Model load error:", e)
 
-# Allow CORS from your frontend URL
+# Allow CORS from both your local dev and your Vercel front-end
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://market-pulse-official.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

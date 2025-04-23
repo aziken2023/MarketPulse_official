@@ -25,6 +25,8 @@ import axios from "axios";
 import Papa from "papaparse";
 import "./index.css";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+
 // ------------------ PredictionChart Component ------------------
 function PredictionChart({ predictions }) {
   if (
@@ -121,7 +123,7 @@ function GeminiChatbot({ datasetContext, customerSegments }) {
     if (!userInput.trim()) return;
     setConversation((prev) => [...prev, { sender: "user", text: userInput }]);
     try {
-      const response = await axios.post("http://localhost:8000/gemini-chatbot", {
+      const response = await axios.post(`${API_BASE_URL}/gemini-chatbot`, {
         query: userInput,
         datasetContext,
         customerSegments,
@@ -210,7 +212,7 @@ function TopNav() {
   };
   return (
     <div className="top-nav">
-      <div className="logo">MarketPro</div>
+      <div className="logo">MarketPulse</div>
       <div className="nav-links">
         <ul>
           <li>
@@ -234,7 +236,7 @@ function TopNav() {
 function Home() {
   return (
     <div className="container home-container">
-      <h1>Welcome to MarketPro!</h1>
+      <h1>Welcome to MarketPulse!</h1>
       <p>
         Get the latest insights on consumer behaviour and make data-driven decisions to grow your business.
       </p>
@@ -621,7 +623,7 @@ function Dashboard() {
       };
       fileReader.readAsText(file);
 
-      const response = await axios.post("http://localhost:8000/recommend-business", formData, {
+      const response = await axios.post(`${API_BASE_URL}/recommend-business`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setMessage("Analysis completed.");
@@ -654,7 +656,7 @@ function Dashboard() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const response = await axios.post("http://localhost:8000/download-report-pdf", formData, {
+      const response = await axios.post(`${API_BASE_URL}/download-report-pdf`, formData, {
         responseType: "blob",
         headers: { "Content-Type": "multipart/form-data" },
       });
