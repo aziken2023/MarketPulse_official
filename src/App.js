@@ -1,23 +1,7 @@
 // App.js
 import React, { useState, useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Link,
-  useNavigate,
-  useLocation,
-  Navigate,
-} from "react-router-dom";
-import {
-  getAuth,
-  signOut,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  updateEmail,
-  onAuthStateChanged,
-} from "firebase/auth";
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, Navigate,} from "react-router-dom";
+import { getAuth, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updateEmail, onAuthStateChanged,} from "firebase/auth";
 import { auth, db } from "./firebaseconfig";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import Plot from "react-plotly.js";
@@ -311,6 +295,7 @@ function LoginForm({ switchForm }) {
   );
 }
 
+//function for registration
 function RegisterForm({ switchForm }) {
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
@@ -424,6 +409,7 @@ function RegisterForm({ switchForm }) {
   );
 }
 
+// function for Account
 function Account() {
   const [userInfo, setUserInfo] = useState({});
   useEffect(() => {
@@ -488,6 +474,7 @@ function Account() {
   );
 }
 
+//function to filter chart
 function FilteredChart({ col, originalData }) {
   const sampleValue = originalData.find(
     (row) => row[col] !== undefined && row[col] !== null
@@ -573,6 +560,7 @@ function FilteredChart({ col, originalData }) {
   );
 }
 
+// function for Dashboard
 function Dashboard() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState(null);
